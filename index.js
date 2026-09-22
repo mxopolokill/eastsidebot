@@ -1,7 +1,20 @@
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
+const http = require('http');
 const { Client, GatewayIntentBits, Collection } = require('discord.js');
+
+// Serveur HTTP pour le health check Koyeb
+const PORT = process.env.PORT || 8080;
+
+const server = http.createServer((req, res) => {
+  res.writeHead(200, { 'Content-Type': 'text/plain' });
+  res.end('OK');
+});
+
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`🌐 Health check actif sur le port ${PORT}`);
+});
 
 const client = new Client({
   intents: [
@@ -16,10 +29,13 @@ client.commands = new Collection();
 
 // 1. Chargement dynamique des commandes
 const commandsPath = path.join(__dirname, 'src', 'commands');
+
 if (fs.existsSync(commandsPath)) {
   const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+
   for (const file of commandFiles) {
     const command = require(path.join(commandsPath, file));
+
     if (command.data && command.execute) {
       client.commands.set(command.data.name, command);
     }
